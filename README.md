@@ -114,6 +114,19 @@ The frontend in `Webpage/index.html` calls the Flask backend instead of loading 
 
 This means the visualization updates immediately from the SAR source data without requiring a saved image first.
 
+## Render Deployment
+
+This repository includes a `render.yaml` blueprint for hosting the Flask app on Render.
+
+1. Push the repository to GitHub.
+2. Create a new Render Web Service from the repository, or let Render detect `render.yaml` automatically.
+3. Use the blueprint values in `render.yaml`:
+    - Build command: `pip install -r requirements.txt`
+    - Start command: `gunicorn app:app`
+4. Deploy the service and open the Render URL.
+
+Render will host the Flask backend and the frontend together from the same service, so the dashboard keeps working with instant SAR rendering.
+
 ## Deep Learning Workflow
 
 The model pipeline is inside `src/`. Run these commands from the `src` folder because the scripts use paths like `../data` and `../outputs`.
