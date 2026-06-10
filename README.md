@@ -1,8 +1,43 @@
 # Ocean Wind Estimation
 
-This project estimates and visualizes ocean wind fields from SAR satellite GeoTIFF images. It includes two workflows:
+## Run Everything
+
+From the project root, use these commands:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python app.py
+```
+
+Open the dashboard at `http://127.0.0.1:5000`.
+
+To generate saved PNGs for every SAR file instead of rendering on demand:
+
+```powershell
+python final_map.py
+```
+
+To run the single-region interactive scripts:
+
+```powershell
+python gujarat_map.py
+python tn_map.py
+```
+
+To train and run the ML workflow:
+
+```powershell
+cd src
+New-Item -ItemType Directory -Force ..\outputs\models
+python train.py
+python inference.py
+```
+
+This project estimates and visualizes ocean wind fields from SAR satellite GeoTIFF images. It includes three workflows:
 
 - A signal-processing workflow that extracts wind-vector patterns from SAR image texture and saves quiver-map PNGs.
+- A Flask web app that renders SAR wind maps on demand from the dataset.
 - A deep-learning workflow that trains a ResNet18 model to predict wind-vector components from SAR image patches.
 
 The current datasets focus on two coastal regions:
@@ -14,9 +49,12 @@ The current datasets focus on two coastal regions:
 
 ```text
 .
+|-- app.py                              # Flask backend for instant SAR map rendering
 |-- final_map.py                         # Batch map generator for Gujarat and Tamil Nadu
 |-- gujarat_map.py                       # Interactive Gujarat single-file map generator
 |-- tn_map.py                            # Interactive Tamil Nadu single-file map generator
+|-- Webpage/
+|   `-- index.html                       # Frontend that calls the Flask backend
 |-- src/
 |   |-- dataset.py                       # PyTorch dataset loader for SAR images and metadata labels
 |   |-- inference.py                     # Runs trained model on a SAR image and plots predictions
@@ -27,9 +65,10 @@ The current datasets focus on two coastal regions:
 |   |-- tn_training_metadata_2023_2024.csv
 |   |-- SAR_Local_Dataset/               # Gujarat SAR GeoTIFF files
 |   `-- SAR_TN_Local_Dataset/            # Tamil Nadu SAR GeoTIFF files
-`-- outputs/
+|-- outputs/
     |-- maps/                            # Generated map PNGs
     `-- models/                          # Trained model weights, created before training
+`-- requirements.txt                     # Python dependencies for the web app and processing scripts
 ```
 
 ## Requirements
@@ -37,7 +76,7 @@ The current datasets focus on two coastal regions:
 Use Python 3.9 or newer. The main Python packages are:
 
 ```powershell
-pip install numpy pandas matplotlib scipy rasterio torch torchvision
+pip install -r requirements.txt
 ```
 
 On Windows, `rasterio` can sometimes be easier to install through Conda:
@@ -48,23 +87,7 @@ conda install -c conda-forge rasterio
 
 ## Quick Start
 
-From the project root, activate your virtual environment if you use one:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-Generate maps for all available Gujarat and Tamil Nadu SAR files:
-
-```powershell
-python final_map.py
-```
-
-Generated maps are saved in:
-
-```text
-outputs/maps
-```
+See the top section for the main run commands. The dashboard reads SAR files directly from `data/SAR_Local_Dataset` and `data/SAR_TN_Local_Dataset`, while saved maps are written to `outputs/maps`.
 
 ## Single-Region Map Scripts
 
@@ -81,6 +104,15 @@ python tn_map.py
 ```
 
 Both scripts list the available `.tif` files, ask for a number, then save a wind-map PNG in `outputs/maps`.
+
+## Web App Flow
+
+The frontend in `Webpage/index.html` calls the Flask backend instead of loading pre-generated PNGs.
+
+- `GET /api/files?region=tn|gujarat` returns the available SAR files in the selected dataset folder.
+- `GET /api/render?region=tn|gujarat&file=...` processes the selected `.tif` file on demand and returns a freshly rendered PNG.
+
+This means the visualization updates immediately from the SAR source data without requiring a saved image first.
 
 ## Deep Learning Workflow
 
